@@ -1,63 +1,10 @@
 // const puppeteer = require('puppeteer');
 
-import puppeteer from 'puppeteer-extra';
-import Tesseract from 'node-tesseract-ocr';
-import RecaptchaPlugin from 'puppeteer-extra-plugin-recaptcha';
-import pkg from 'svg2img'
+import puppeteer from 'puppeteer';
 import fs from 'fs'
+import get_captcha from './helper.js'
 
-const { svg2img } = pkg
 
-async function yourOCRFunction(imageBuffer) {
-  try {
-    // Set up the Tesseract options
-    const config = {
-      lang: 'eng', // Specify the language
-      oem: 1, // Use LSTM OCR Engine
-      psm: 7, // Treat the image as a single line of text
-    };
-
-    // Perform OCR using node-tesseract-ocr
-    const captchaSolution = await Tesseract.recognize(imageBuffer, config);
-
-    // Clean up the OCR output
-    const cleanedText = captchaSolution.replace(/[^a-zA-Z0-9]/g, '');
-
-    // Return the solved captcha as a string
-    return cleanedText;
-  } catch (error) {
-    console.error('OCR error:', error);
-    throw error;
-  }
-}
-
-async function solveCaptcha(page) {
-  try {
-    // Select the captcha element
-    const captchaElement = await page.$('#captcha');
-
-    // Get the captcha image source
-    const captchaImageSrc = await page.evaluate((element) => {
-      return element.getAttribute('src');
-    }, captchaElement);
-
-    // Download the captcha image
-    const imageBuffer = await page.evaluate(async (src) => {
-      const response = await fetch(src);
-      const buffer = await response.arrayBuffer();
-      return buffer;
-    }, captchaImageSrc);
-
-    // Solve the captcha using node-tesseract-ocr
-    const captchaSolution = await yourOCRFunction(imageBuffer);
-
-    // Return the solved captcha as a string
-    return captchaSolution;
-  } catch (error) {
-    console.error('Error:', error);
-    throw error;
-  }
-}
 
 async function automateReservation() {
   const browser = await puppeteer.launch({
@@ -70,9 +17,9 @@ async function automateReservation() {
   const testUrl3 = 'https://bcparks.ca/reservations/day-use-passes/'
 
   // Input field values
-  const firstName = 'John';
-  const lastName = 'Doe';
-  const email = 'johndoe@example.com';
+  const firstName = 'Tausif';
+  const lastName = 'Khan';
+  const email = 'tausif_1206@yahoo.com';
 
   await page.goto(testUrl3, { waitUntil: 'load' })
   await page.screenshot({ path: 'allItems.png' })
@@ -86,7 +33,7 @@ async function automateReservation() {
   // Pick Date
   const dp = await page.waitForSelector('button.date-input__calendar-btn.form-control')
   await dp.click()
-  const dateElement = await page.waitForSelector('.ngb-dp-day[aria-label="Wednesday, July 5, 2023"]');
+  const dateElement = await page.waitForSelector('.ngb-dp-day[aria-label="Thursday, July 6, 2023"]');
   await dateElement.click();
 
 
@@ -139,20 +86,47 @@ async function automateReservation() {
     await page.waitForSelector('app-captcha');
 
     setTimeout(async () => {
-      // Capture a screenshot of the captcha section
-      const captchaElement = await page.$('app-captcha');
-      // Get the captcha SVG content
-      const captchaSVGContent = await page.$eval('app-captcha svg', (element) => element.outerHTML);
-      svg2img(captchaSVGContent, { format: 'png' }, (error, buffer) => {
-        if (error) {
-          console.error('Error converting SVG to PNG:', error);
-          return;
-        }
+      // Wait for the CAPTCHA image to load
+      await page.waitForSelector('.captcha-image');
 
-        // Save the PNG image to a file
-        fs.writeFileSync('captcha.png', buffer);
-        console.log('Captcha image saved as captcha.png');
-      });
+      // Wait for the CAPTCHA image to load
+      await page.waitForSelector('.captcha-image');
+      await page.waitForTimeout(2000);
+      const captchaImage = await page.$('.captcha-image');
+
+      await captchaImage.screenshot({ path: 'captcha.png' })
+
+      // Wait for the captcha input field to be visible
+      await page.waitForSelector('#answer');
+
+      const imagePath = './captcha.png';
+      const imageData = await fs.readFileSync(imagePath);
+
+      // Convert the image data to base64 format
+      const base64Data = await imageData.toString('base64');
+      try {
+        const solvedCaptchaText = await get_captcha(base64Data)
+        console.log('solved captcha text --> ', solvedCaptchaText.result)
+
+        // Type the captcha text into the input field
+        if (solvedCaptchaText.result) {
+          await page.type('#answer', solvedCaptchaText.result);
+          // Wait for the submit button to become enabled
+          await page.waitForSelector('div.d-flex.justify-content-end button.btn-primary:not([disabled])');
+          // Click the submit button
+          await page.click('div.d-flex.justify-content-end button.btn-primary');
+
+          // Wait for the navigation to complete
+          await page.waitForNavigation();
+
+          // Take a screenshot of the resulting page
+          await page.screenshot({ path: 'screenshot.png' });
+          await browser.close();
+        }
+      } catch (err) {
+        console.log('error happened --> ', err)
+        await browser.close();
+      }
 
     }, 1000)
 
