@@ -2,7 +2,7 @@
 
 import puppeteer from 'puppeteer';
 import fs from 'fs'
-import get_captcha from './helper.js'
+import solveMyCaptcha from './helper.js'
 
 
 
@@ -105,7 +105,7 @@ async function automateReservation() {
       // Convert the image data to base64 format
       const base64Data = await imageData.toString('base64');
       try {
-        const solvedCaptchaText = await get_captcha(base64Data)
+        const solvedCaptchaText = await solveMyCaptcha(base64Data)
         console.log('solved captcha text --> ', solvedCaptchaText.result)
 
         // Type the captcha text into the input field
