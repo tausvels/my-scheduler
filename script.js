@@ -1,4 +1,5 @@
-// const puppeteer = require('puppeteer');
+import { CronJob } from 'cron'
+/*
 
 import puppeteer from 'puppeteer';
 import fs from 'fs'
@@ -136,4 +137,33 @@ async function automateReservation() {
 }
 
 automateReservation()
+*/
 
+const formatDateToString = () => {
+  const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  
+  const currentDate = new Date();
+  const year = currentDate.getFullYear();
+  const month = String(currentDate.getMonth() + 1).padStart(2, "0");
+  const day = String(currentDate.getDate()).padStart(2, "0");
+  const dayOfWeek = daysOfWeek[currentDate.getDay()];
+  const time = currentDate.toLocaleTimeString();
+
+  return `Date: ${year}-${month}-${day}, Day: ${dayOfWeek} and Time is: ${time}`;
+  // return 'I am running'
+}
+
+const job = new CronJob(
+  '* * * * * *',
+    function() {
+        console.log(formatDateToString())
+    },
+    null,
+    false,
+    'America/Los_Angeles'
+);
+
+job.start()
+setTimeout(() => {
+  job.stop()
+}, 5000)
