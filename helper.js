@@ -16,4 +16,20 @@ const solveMyCaptcha = async (imageInBase64) => {
     return response.data
   }).catch(err => err)
 }
-export default solveMyCaptcha
+
+const formatDateToString = () => {
+  const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+  const currentDate = new Date();
+  const year = currentDate.getFullYear();
+  const month = String(currentDate.getMonth() + 1).padStart(2, "0");
+  const day = String(currentDate.getDate()).padStart(2, "0");
+  const dayOfWeek = daysOfWeek[currentDate.getDay()];
+  const time = currentDate.toLocaleTimeString();
+
+  return `Date: ${year}-${month}-${day}, Day: ${dayOfWeek} and Time is: ${time}`;
+}
+export {
+  solveMyCaptcha,
+  formatDateToString
+}

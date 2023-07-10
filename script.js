@@ -1,9 +1,8 @@
 import { CronJob } from 'cron'
-/*
 
 import puppeteer from 'puppeteer';
 import fs from 'fs'
-import solveMyCaptcha from './helper.js'
+import { solveMyCaptcha, formatDateToString } from './helper.js'
 
 
 
@@ -13,8 +12,6 @@ async function automateReservation() {
     defaultViewport: false
   });
   const page = await browser.newPage();
-  const testUrl = 'https://example.com'
-  const testUrl2 = 'https://reserve.bcparks.ca/dayuse/'
   const testUrl3 = 'https://bcparks.ca/reservations/day-use-passes/'
 
   // Input field values
@@ -34,7 +31,7 @@ async function automateReservation() {
   // Pick Date
   const dp = await page.waitForSelector('button.date-input__calendar-btn.form-control')
   await dp.click()
-  const dateElement = await page.waitForSelector('.ngb-dp-day[aria-label="Thursday, July 6, 2023"]');
+  const dateElement = await page.waitForSelector(`.ngb-dp-day[aria-label="${process.env.dateOfPass}"]`);
   await dateElement.click();
 
 
@@ -83,6 +80,9 @@ async function automateReservation() {
     await page.click('input[type="checkbox"]');
     await page.setUserAgent('5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36');
 
+    // -----------------------
+    //* CAPTCHA PART //
+    // -----------------------
     // Wait for the captcha section to be visible
     await page.waitForSelector('app-captcha');
 
@@ -100,10 +100,11 @@ async function automateReservation() {
       // Wait for the captcha input field to be visible
       await page.waitForSelector('#answer');
 
+      await browser.close(); //! <-- REMOVE THIS LINE ONCE TEST IS COMPLETE
+      /*
       const imagePath = './captcha.png';
-      const imageData = await fs.readFileSync(imagePath);
-
       // Convert the image data to base64 format
+      const imageData = await fs.readFileSync(imagePath);
       const base64Data = await imageData.toString('base64');
       try {
         const solvedCaptchaText = await solveMyCaptcha(base64Data)
@@ -122,12 +123,17 @@ async function automateReservation() {
 
           // Take a screenshot of the resulting page
           await page.screenshot({ path: 'screenshot.png' });
+          const isSuccess = await page.evaluate(() => {
+            const qrCodeElement = document.querySelector('#qr-code .d-none');
+            return qrCodeElement !== null;
+          });
           await browser.close();
         }
       } catch (err) {
         console.log('error happened --> ', err)
         await browser.close();
       }
+      */
 
     }, 1000)
 
@@ -136,34 +142,28 @@ async function automateReservation() {
 
 }
 
-automateReservation()
-*/
+// automateReservation()
 
-const formatDateToString = () => {
-  const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  
-  const currentDate = new Date();
-  const year = currentDate.getFullYear();
-  const month = String(currentDate.getMonth() + 1).padStart(2, "0");
-  const day = String(currentDate.getDate()).padStart(2, "0");
-  const dayOfWeek = daysOfWeek[currentDate.getDay()];
-  const time = currentDate.toLocaleTimeString();
 
-  return `Date: ${year}-${month}-${day}, Day: ${dayOfWeek} and Time is: ${time}`;
-  // return 'I am running'
-}
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+let runCount = 0;
 const job = new CronJob(
-  '* * * * * *',
-    function() {
-        console.log(formatDateToString())
-    },
-    null,
-    false,
-    'America/Los_Angeles'
+  '*/10 05 3 * * *',
+  // '*/2 * * * * *',
+  async function () {
+    // await delay(5000)
+    await automateReservation();
+    console.log(formatDateToString())
+    if (runCount >= 3) {
+      job.stop()
+      console.log('Stopping cron job')
+    }
+    runCount++
+  },
+  null,
+  false,
+  'America/Los_Angeles'
 );
 
 job.start()
-setTimeout(() => {
-  job.stop()
-}, 5000)
