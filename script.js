@@ -2,9 +2,7 @@ import { CronJob } from 'cron'
 
 import puppeteer from 'puppeteer';
 import fs from 'fs'
-import { solveMyCaptcha, formatDateToString } from './helper.js'
-
-
+import { solveMyCaptcha, displayDateAndTime, checkAvailibilityOfPass } from './helper.js'
 
 async function automateReservation() {
   const browser = await puppeteer.launch({
@@ -12,14 +10,14 @@ async function automateReservation() {
     defaultViewport: false
   });
   const page = await browser.newPage();
-  const testUrl3 = 'https://bcparks.ca/reservations/day-use-passes/'
+  const requestUrl = process.env.dayPassUrl;
 
   // Input field values
   const firstName = 'Tausif';
   const lastName = 'Khan';
   const email = 'tausif_1206@yahoo.com';
 
-  await page.goto(testUrl3, { waitUntil: 'load' })
+  await page.goto(requestUrl, { waitUntil: 'load' })
   await page.screenshot({ path: 'allItems.png' })
 
   await page.click('#gatsby-focus-wrapper > div:nth-child(5) > div > div > div.page-content.col-md-9.col-12 > div.header-content > div > p:nth-child(5) > a')
@@ -144,17 +142,14 @@ async function automateReservation() {
 
 // automateReservation()
 
-
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
 let runCount = 0;
 const job = new CronJob(
   '*/10 05 3 * * *',
   // '*/2 * * * * *',
   async function () {
     // await delay(5000)
-    await automateReservation();
-    console.log(formatDateToString())
+    // await automateReservation();
+    console.log(displayDateAndTime())
     if (runCount >= 3) {
       job.stop()
       console.log('Stopping cron job')
@@ -166,4 +161,19 @@ const job = new CronJob(
   'America/Los_Angeles'
 );
 
-job.start()
+// job.start()
+
+// checkAvailibilityOfPass({ 
+//   nameOfPark: 'Garibaldi',
+//   option: 'Rubble Creek',
+//   visitDate: process.env.dateOfPass,
+//   passType: 'Day',
+//   noOfPassRerequired: 1
+// });
+checkAvailibilityOfPass({ 
+  nameOfPark: process.env.nameOfPark,
+  option: process.env.option,
+  visitDate: process.env.dateOfPass,
+  passType: process.env.passType,
+  noOfPassRerequired: process.env.noOfPassRerequired
+}).then((isAvailable) => console.log('isAvailable ', isAvailable))
