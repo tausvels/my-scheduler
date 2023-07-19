@@ -1,7 +1,7 @@
 const ParkName = {
   Garibaldi: { 
     facility: {
-      Cheakmus: 'Cheakamus',
+      Cheakamus: 'Cheakamus',
       'Diamond Head': 'Diamond Head',
       'Rubble Creek': 'Rubble Creek'
     }, 

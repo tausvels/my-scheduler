@@ -5,11 +5,11 @@ import { ParkName } from './constants.js';
 const solveMyCaptcha = async (imageInBase64) => {
   imageInBase64 = imageInBase64.replace(/^data:image\/(png|jpg|jpeg|gif);base64,/, "")
   const params = {
-    userid: process.env.userId,
-    apikey: process.env.apikey,
+    USER_ID: process.env.USER_ID,
+    API_KEY: process.env.API_KEY,
     data: imageInBase64,
   }
-  const url = "https://api.apitruecaptcha.org/one/gettext"
+  const url = process.env.CAPTCHA_URL;
 
   return axios.post(url, {
     ...params
@@ -73,7 +73,7 @@ const checkAvailibilityOfPass = async ({
 
     const formattedDate = new Date(visitDate).toISOString().split('T')[0];
     const facility = `?facility=${option}&park=${parkObject.code}` 
-    const url = `${process.env.parkUrlPrefix}/${process.env.reservationPrefix}${facility}`
+    const url = `${process.env.AVAILABILITY_URL_PREFIX}/${process.env.RESERVATION_PREFIX}${facility}`
 
     const { data } = await axios.request({ url, method: 'GET' })
 
