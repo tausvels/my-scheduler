@@ -1,6 +1,7 @@
 import { CronJob } from 'cron'
 import puppeteer from 'puppeteer';
 import fs from 'fs'
+import { parkOptions } from './constants.js'
 import { solveMyCaptcha, displayDateAndTime, checkAvailibilityOfPass } from './helper.js'
 
 async function automateReservation() {
@@ -21,9 +22,9 @@ async function automateReservation() {
 
   await page.click('#gatsby-focus-wrapper > div:nth-child(5) > div > div > div.page-content.col-md-9.col-12 > div.header-content > div > p:nth-child(5) > a')
 
-  const jp = await page.waitForSelector(`::-p-aria([name="Book a pass for ${process.env.NAME_OF_PROVENCIAL_PARK} Provincial Park"][role="button"])`);
+  const parkOfInterest = await page.waitForSelector(`::-p-aria([name="Book a pass for ${process.env.NAME_OF_PROVENCIAL_PARK} Provincial Park"][role="button"])`);
 
-  await jp.click()
+  await parkOfInterest.click()
 
   // Pick Date
   const dp = await page.waitForSelector('button.date-input__calendar-btn.form-control')
@@ -39,14 +40,7 @@ async function automateReservation() {
     await page.click('select#passType');
     // Wait for the option to become visible
     await page.waitForSelector('select#passType option:not([disabled])');
-    // Select the only available option
-    // await page.select('select#passType', await page.$eval('select#passType option:not([disabled])', (option) => option.value));
-    // // Wait for the element to be visible on the page
-    // const visitTimeDisabled = await page.$eval('#visitTimeDAY', (radioButton) => {
-    //   return radioButton.hasAttribute('disabled');
-    // });
-    // console.log('##1 visitTImeDisabled', visitTimeDisabled)
-    const options = ["Cheakamus", "Diamond Head", "Rubble Creek", "Alouette Lake Boat Launch Parking", "Alouette Lake South Beach", "Gold Creek", "West Canyon Trail", "Joffre Lakes"];
+    // Option to select
     const selectedOption = process.env.OPTION;
     await page.select('select#passType', await page.$eval('select#passType', (select, options, selectedOption) => {
       const matchingOption = Array.from(select.options).find((option) => {
@@ -54,7 +48,7 @@ async function automateReservation() {
       });
 
       return matchingOption.value;
-    }, options, selectedOption));
+    }, parkOptions, selectedOption));
     // Wait for the element to be visible on the page
     const visitTimeDisabled = await page.$eval('#visitTimeDAY', (radioButton) => {
       return radioButton.hasAttribute('disabled');
@@ -140,8 +134,15 @@ async function automateReservation() {
             });
 
             // Take a screenshot of the resulting page
-            await page.screenshot({ path: 'screenshot.png' });
+            await page.screenshot({ path: 'qrCode.png' });
             console.log('## isSuccess --> ', isSuccess)
+            fs.unlink('./captcha.png', (err) => {
+              if (err) {
+                console.error('Error deleting the file: ', err)
+              } else {
+                console.log('Captcha image successfully deleted')
+              }
+            })
             await browser.close();
             return isSuccess;
           }
@@ -161,9 +162,7 @@ async function automateReservation() {
 
 }
 
-// automateReservation()
-
-let runCount = 0;
+let runCount = 1;
 const job = new CronJob(
   process.env.CRON_RUN_TIME,
   async function () {
@@ -176,8 +175,7 @@ const job = new CronJob(
     })
     console.log(displayDateAndTime())
     console.log('pass is available ', passIsAvailable)
-    const byPass = false;
-    console.log('runCount --> ', runCount)
+    const byPass = false; // change to true if you want to bypass the isAvailable flag
     if (passIsAvailable || byPass) {
       const isSuccess = await automateReservation()
       if (isSuccess) {
@@ -201,6 +199,7 @@ const job = new CronJob(
 
 job.start()
 
+// EXAMPLES
 // checkAvailibilityOfPass({ 
 //   nameOfPark: 'Garibaldi',
 //   option: 'Rubble Creek',

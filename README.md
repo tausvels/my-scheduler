@@ -1,62 +1,51 @@
-# my-scheduler
+# About
+This application does an automated booking for reservation passes for BC parks, the ones that requires a a Day Pass.
 
-# A. Running the script manually
-```
-cd my-scheduler
-node script.js
-```
-# B. CRON job with BASH
-1. Open terminal in bash, of if in MAC (it is default to zsh)
+# Installation
+```npm install```
 
-2. Type `which node` in terminal to get the path of the Node executable
+# Configuration
+*Look at `.env.example` on how to create your own `.env` file
 
-3. Run `crontab -e` to edit the cron table
+# API Key needed for CAPTCHA solver
+1. Create a free account at: https://truecaptcha.org
+2. Get your userId (typically it will be your username)
+3. Get your API Key
+4. Update your .env file with these
 
-4. To exit the editor, hit `escape` followed by `:wq`
+# Available Params and Options (must be included in the env file):
+1. DATE_OF_PASS must be in the format: `Wednesday, July 19, 2023`
+2. TURN_OFF_CAPTCHA: true/false (this is for development purpose), default is false.
+3. NAME_OF_PARK: Available options are: `Garibaldi, GoldenEars and Joffre`
+4. NAME_OF_PROVENCIAL_PARK: Available options are: `Golden Ears, Joffre Lakes and Garibaldi`
+5. Option (this applies because different parks have different options you can visit)Available options:
+  * For Garibaldi --> `Cheakamus, Diamond Head and Rubble Creek`
+  * For GoldenEars --> `Alouette Lake Boat Launch Parking, Alouette Lake South Beach, Gold Creek, West Canyon Trail`
+  * For Joffre --> `Joffre Lakes`
+6. PASS_TYPE='Day'
+  Available options:
+  * For Garibaldi and Joffre --> `Day`
+  * For GoldenEars --> `AM, PM and DAY`
+7. NO_OF_PASS_REQUIRED=1
+    Available options:
+  * For Joffre --> `1 to 4`
+  * For Garibaldi and GoldenEars --> `1` (since it is per vehicle)
+8. FIRST_NAME=`Your first name` LAST_NAME=`Your last name` EMAIL=`Your email address`
+9. *For the cron job (which is basically schedulling when the automation should run and for how many times)
+CRON_RUN_COUNT=2
+CRON_RUN_TIME='*/10 11 21 * * *' 
+`The above 2 params makes the program run at 10 seconds interval on the 11th minute of 21 hours two times`
+10. AVAILABILITY_URL_PREFIX='https://jd7n1axqh0.execute-api.ca-central-1.amazonaws.com/api'
+*This is the url at which the program will check for the availibility of passes for a given park
+11. RESERVATION_PREFIX='reservation'
+12. DAY_PASS_URL='https://bcparks.ca/reservations/day-use-passes/'
+*This is the link where the automation is going to run
 
-5. To remove the cron job, Run `crontab -e` to edit the cron table and delete the line you from the cron schedule and save & exit.
+# Run the script
+`npm start`
 
-6. To see the output, in bash, you have to type `mail`
+# Output
+If successfully booked a reservation, the script with output a `qrCode.png` file within the root directory. You should also receive an email with the reservation along with the qrCode.
 
-7. Do delete all the mail, open mbox in VS Code (it can be found in the user/[your user name])
-
-8. Delete everthing and save the file as mail.txt
-
-9. Run `sudo mv ~/mail.txt /var/mail/tausifkhan` in terminal
-
-10. To STOPp the cron job, type this in the terminal: `open the crontab editor and put a # before the command`
-
-## 1. e.g- Running the scrpt 4 times with 10 seconds intervals
-1. Repeat process <strong>B (1-3) </strong>
-2. Add the following line to the end of the file:
-```
-*/20 * * * * /usr/local/bin/node /full-path-to-script-file >> /full-path-to-log-file-where-you-wwant-to-save-the-log-file/logfile.log 2>&1
-```
-3. Exit the editor
-4. Pase the following code and hit enter
-```
-counter=0
-while [ $counter -lt 4 ]; do
-  /usr/local/bin/node /Users/tausifkhan/Desktop/git_folders/my-scheduler/script.js
-  sleep 10
-  ((counter++))
-done
-```
-5. In this example, the output of the script WILL NOT BE SAVED in the log file
-
-## 2. e.g- Running the scrpt everyday at 2pm local time 4 times with 10 seconds intervals
-1. Repeat process <strong>B (1-3) </strong>
-2. Enter the following line:
-```
-counter=0
-while [ $counter -lt 4 ]; do
-  /usr/local/bin/node /Users/tausifkhan/Desktop/git_folders/my-scheduler/script.js 2>&1 | tee -a /Users/tausifkhan/Desktop/git_folders/my-scheduler/logfile.log
-  sleep 10
-  ((counter++))
-done
-
-```
-Note* the `tee` command lets you outout both in the logfile and in the terminal
-3. Hit escape in keyboard
-4. Save and exit the edit by `:wq` and hit enter.
-5. In this example, the output of the script WILL BE SAVED in the log file
+# Termination
+To terminate the script, `ctrl + c`

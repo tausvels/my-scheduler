@@ -1,6 +1,6 @@
 import 'dotenv/config'
 import axios from 'axios';
-import { ParkName } from './constants.js';
+import { ParkName, daysOfWeek } from './constants.js';
 
 const solveMyCaptcha = async (imageInBase64) => {
   imageInBase64 = imageInBase64.replace(/^data:image\/(png|jpg|jpeg|gif);base64,/, "")
@@ -19,8 +19,6 @@ const solveMyCaptcha = async (imageInBase64) => {
 }
 
 const displayDateAndTime = () => {
-  const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-
   const currentDate = new Date();
   const year = currentDate.getFullYear();
   const month = String(currentDate.getMonth() + 1).padStart(2, "0");
@@ -77,7 +75,7 @@ const checkAvailibilityOfPass = async ({
 
     const { data } = await axios.request({ url, method: 'GET' })
 
-    console.log('data available --> ', data)
+    console.log('dates available --> ', data)
     let timeOfDay = passType.toLowerCase()
     if (timeOfDay === 'day') { timeOfDay = 'DAY'}
     else if (timeOfDay === 'pm') { timeOfDay = 'PM'}
@@ -87,7 +85,7 @@ const checkAvailibilityOfPass = async ({
     return isAvailable
 
   } catch (error) {
-    console.log('returning here ', error.message)
+    console.error('Error happened while getting pass availibility', error.message)
     return error
   }
 }

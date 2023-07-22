@@ -20,8 +20,11 @@ const ParkName = {
     facility: { 'Joffre Lakes': 'Joffre Lakes'}, code: '0363'
   },
 }
+const parkOptions = ["Cheakamus", "Diamond Head", "Rubble Creek", "Alouette Lake Boat Launch Parking", "Alouette Lake South Beach", "Gold Creek", "West Canyon Trail", "Joffre Lakes"];
 
-export { ParkName }
+const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+export { ParkName, parkOptions, daysOfWeek }
 
 /*
 https://jd7n1axqh0.execute-api.ca-central-1.amazonaws.com/api/reservation?facility=Joffre Lakes&park=0363
