@@ -32,7 +32,7 @@ const displayDateAndTime = () => {
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 const isPassAvailable = (apiResponse, timeOfDay, passRequired) => {
-  if (!passRequired) {
+  if (!passRequired || !apiResponse) {
     throw new Error(`Number of pass is required.`)
   }
   const availityTimeFromResponse = Object.keys(apiResponse) // gives DAY, AM, PM
@@ -42,6 +42,25 @@ const isPassAvailable = (apiResponse, timeOfDay, passRequired) => {
 
   const { capacity, max } = apiResponse[timeOfDay]
   return capacity !== 'Full' && max >= passRequired
+}
+
+const  dateValidator = (dateInput) => {
+  const pattern = /^(Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday), (January|February|March|April|May|June|July|August|September|October|November|December) ([1-9]|[12][0-9]|3[01]), \d{4}$/;
+
+const validDateFormat = /^([A-Za-z]+), ([A-Za-z]+) (\d{1,2}), (\d{4})$/;
+if (!validDateFormat.test(dateInput)) {
+return false;
+}
+
+const [, , month, day] = dateInput.match(/^([A-Za-z]+), ([A-Za-z]+) (\d{1,2}), (\d{4})$/);
+
+const monthsWith31Days = ['January', 'March', 'May', 'July', 'August', 'October', 'December'];
+
+if (day < 1 || day > 31 || (month === 'February' && day > 29) || (!monthsWith31Days.includes(month) && day >= 31)) {
+return false;
+}
+
+return pattern.test(dateInput);
 }
 
 const checkAvailibilityOfPass = async ({
@@ -95,5 +114,6 @@ export {
   displayDateAndTime,
   delay,
   checkAvailibilityOfPass,
-  isPassAvailable
+  isPassAvailable,
+  dateValidator,
 }

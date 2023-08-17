@@ -2,7 +2,7 @@ import { CronJob } from 'cron'
 import puppeteer from 'puppeteer';
 import fs from 'fs'
 import { parkOptions } from './constants.js'
-import { solveMyCaptcha, displayDateAndTime, checkAvailibilityOfPass } from './helper.js'
+import { solveMyCaptcha, displayDateAndTime, checkAvailibilityOfPass, dateValidator } from './helper.js'
 
 async function automateReservation() {
   const browser = await puppeteer.launch({
@@ -153,6 +153,7 @@ async function automateReservation() {
         }
       } else {
         // Close the browser if captcha is turned off
+        await page.screenshot({ path: 'captcha_page.png' })
         await browser.close();
         return false;
       }
@@ -166,31 +167,39 @@ let runCount = 1;
 const job = new CronJob(
   process.env.CRON_RUN_TIME,
   async function () {
-    const passIsAvailable = await checkAvailibilityOfPass({
-      nameOfPark: process.env.NAME_OF_PARK,
-      option: process.env.OPTION,
-      visitDate: process.env.DATE_OF_PASS,
-      passType: process.env.PASS_TYPE,
-      noOfPassRerequired: process.env.NO_OF_PASS_REQUIRED
-    })
-    console.log(displayDateAndTime())
-    console.log('pass is available ', passIsAvailable)
     const byPass = false; // change to true if you want to bypass the isAvailable flag
-    if (passIsAvailable || byPass) {
-      const isSuccess = await automateReservation()
-      if (isSuccess) {
-        job.stop()
-      } else if (runCount >= process.env.CRON_RUN_COUNT) { // continue with cron
-        job.stop()
-        console.log('Stopping cron job')
-      }
-    } else {
-      if (runCount >= process.env.CRON_RUN_COUNT) {
-        job.stop()
-        console.log('Stopping cron job')
-      }
+    if (!dateValidator(process.env.DATE_OF_PASS)) {
+      throw new Error('Date must be of correct format, e.g.- Friday, August 4, 2023')
     }
-    runCount++
+    try {
+      const passIsAvailable = await checkAvailibilityOfPass({
+        nameOfPark: process.env.NAME_OF_PARK,
+        option: process.env.OPTION,
+        visitDate: process.env.DATE_OF_PASS,
+        passType: process.env.PASS_TYPE,
+        noOfPassRerequired: process.env.NO_OF_PASS_REQUIRED
+      })
+      console.log(displayDateAndTime())
+      console.log('pass is available ', passIsAvailable)
+      if (passIsAvailable || byPass) {
+        const isSuccess = await automateReservation()
+        if (isSuccess) {
+          job.stop()
+        } else if (runCount >= process.env.CRON_RUN_COUNT) { // continue with cron
+          job.stop()
+          console.log('Stopping cron job')
+        }
+      } else {
+        if (runCount >= process.env.CRON_RUN_COUNT) {
+          job.stop()
+          console.log('Stopping cron job')
+        }
+      }
+      runCount++
+    } catch (error) {
+      console.log('Error --> ', error)
+      job.stop()
+    }
   },
   null,
   false,
