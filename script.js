@@ -20,7 +20,7 @@ async function automateReservation() {
 
   await page.goto(requestUrl, { waitUntil: 'load' })
 
-  await page.click('#gatsby-focus-wrapper > div:nth-child(5) > div > div > div.page-content.col-md-9.col-12 > div.header-content > div > p:nth-child(5) > a')
+  await page.click('#gatsby-focus-wrapper > div.static-content-container > div > div > div.page-content.col-md-9.col-12 > div.header-content > div > p:nth-child(5) > a')
 
   const parkOfInterest = await page.waitForSelector(`::-p-aria([name="Book a pass for ${process.env.NAME_OF_PROVENCIAL_PARK} Provincial Park"][role="button"])`);
 
