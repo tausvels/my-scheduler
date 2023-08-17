@@ -171,6 +171,7 @@ const job = new CronJob(
     if (!dateValidator(process.env.DATE_OF_PASS)) {
       throw new Error('Date must be of correct format, e.g.- Friday, August 4, 2023')
     }
+    console.log(`Cron runs remaining -> ${process.env.CRON_RUN_COUNT - runCount}`)
     try {
       const passIsAvailable = await checkAvailibilityOfPass({
         nameOfPark: process.env.NAME_OF_PARK,

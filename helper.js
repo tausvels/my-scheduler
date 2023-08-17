@@ -5,8 +5,8 @@ import { ParkName, daysOfWeek } from './constants.js';
 const solveMyCaptcha = async (imageInBase64) => {
   imageInBase64 = imageInBase64.replace(/^data:image\/(png|jpg|jpeg|gif);base64,/, "")
   const params = {
-    USER_ID: process.env.USER_ID,
-    API_KEY: process.env.API_KEY,
+    userid: process.env.USER_ID,
+    apikey: process.env.API_KEY,
     data: imageInBase64,
   }
   const url = process.env.CAPTCHA_URL;
