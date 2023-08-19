@@ -1,6 +1,7 @@
 import { CronJob } from 'cron'
 import puppeteer from 'puppeteer';
 import fs from 'fs'
+import { promises as fsPromises } from 'fs';
 import { parkOptions } from './constants.js'
 import { solveMyCaptcha, displayDateAndTime, checkAvailibilityOfPass, dateValidator } from './helper.js'
 
@@ -31,8 +32,8 @@ async function automateReservation() {
   await dp.click()
   const dateElement = await page.waitForSelector(`.ngb-dp-day[aria-label="${process.env.DATE_OF_PASS}"]`);
   await dateElement.click();
-
-
+  const captchaResult = testCaptcha('./captcha.png')
+/*
   setTimeout(async () => {
     // Pick Pass type
     await page.waitForSelector('select#passType');
@@ -106,8 +107,9 @@ async function automateReservation() {
 
       // Wait for the captcha input field to be visible
       await page.waitForSelector('#answer');
-
+      console.log('##0 answer selector found')
       const turnOffCaptcha = process.env.TURN_OFF_CAPTCHA;
+      
       if (!turnOffCaptcha) {
         const imagePath = './captcha.png';
         // Convert the image data to base64 format
@@ -119,30 +121,34 @@ async function automateReservation() {
 
           // Type the captcha text into the input field
           if (solvedCaptchaText.result) {
+            console.log('##1 reached answer')
             await page.type('#answer', solvedCaptchaText.result);
+            console.log('##2 found answer selector')
             // Wait for the submit button to become enabled
             await page.waitForSelector('div.d-flex.justify-content-end button.btn-primary:not([disabled])');
+            console.log('##3 submit button not disabled')
             // Click the submit button
             await page.click('div.d-flex.justify-content-end button.btn-primary');
-
+            console.log('##4 submit button clicked')
             // Wait for the navigation to complete
             await page.waitForNavigation();
 
             const isSuccess = await page.evaluate(() => {
               const pageContent = document.documentElement.textContent;
+              console.log('##5 page content received')
               return pageContent.includes('Success');
             });
 
             // Take a screenshot of the resulting page
             await page.screenshot({ path: 'qrCode.png' });
             console.log('## isSuccess --> ', isSuccess)
-            fs.unlink('./captcha.png', (err) => {
-              if (err) {
-                console.error('Error deleting the file: ', err)
-              } else {
-                console.log('Captcha image successfully deleted')
-              }
-            })
+            // fs.unlink('./captcha.png', (err) => {
+            //   if (err) {
+            //     console.error('Error deleting the file: ', err)
+            //   } else {
+            //     console.log('Captcha image successfully deleted')
+            //   }
+            // })
             await browser.close();
             return isSuccess;
           }
@@ -154,13 +160,14 @@ async function automateReservation() {
       } else {
         // Close the browser if captcha is turned off
         await page.screenshot({ path: 'captcha_page.png' })
+        console.log('## firing this else statement')
         await browser.close();
         return false;
       }
     }, 1000)
 
   }, 2000)
-
+*/
 }
 
 let runCount = 1;
@@ -181,7 +188,7 @@ const job = new CronJob(
         noOfPassRerequired: process.env.NO_OF_PASS_REQUIRED
       })
       console.log(displayDateAndTime())
-      console.log('pass is available ', passIsAvailable)
+      console.log(`Pass available for ${process.env.DATE_OF_PASS}: `, passIsAvailable)
       if (passIsAvailable || byPass) {
         const isSuccess = await automateReservation()
         if (isSuccess) {
@@ -207,7 +214,7 @@ const job = new CronJob(
   'America/Los_Angeles'
 );
 
-job.start()
+// job.start()
 
 // EXAMPLES
 // checkAvailibilityOfPass({ 
@@ -226,4 +233,17 @@ job.start()
 //   noOfPassRerequired: process.env.NO_OF_PASS_REQUIRED
 // }).then((isAvailable) => console.log('isAvailable ', isAvailable))
 
-// automateReservation()
+automateReservation()
+
+async function testCaptcha (imagePath) {
+  try {
+    const imageData = await fsPromises.readFile(imagePath);
+    const base64Data = await imageData.toString('base64');
+    const captchaResult = await solveMyCaptcha(base64Data);
+    console.log('## test function captcha result -> ', captchaResult)
+    return captchaResult;
+  } catch (error) {
+    console.error(error);
+    throw new Error(`Error happend from test function, ${error}`)
+  }
+}

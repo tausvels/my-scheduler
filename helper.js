@@ -14,6 +14,7 @@ const solveMyCaptcha = async (imageInBase64) => {
   return axios.post(url, {
     ...params
   }).then((response) => {
+    console.log('## solveMyCaptcha response', response.data)
     return response.data
   }).catch(err => err)
 }
