@@ -3,6 +3,7 @@ import axios from 'axios';
 import { ParkName, daysOfWeek } from './constants.js';
 
 const solveMyCaptcha = async (imageInBase64) => {
+  console.log('## solveMyCaptcha firing--> ')
   imageInBase64 = imageInBase64.replace(/^data:image\/(png|jpg|jpeg|gif);base64,/, "")
   const params = {
     userid: process.env.USER_ID,
